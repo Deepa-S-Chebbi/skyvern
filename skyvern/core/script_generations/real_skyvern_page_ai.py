@@ -19,6 +19,7 @@ from skyvern.forge.prompts import prompt_engine
 from skyvern.forge.sdk.api.files import validate_download_url
 from skyvern.forge.sdk.api.llm.api_handler import LLMAPIHandler
 from skyvern.forge.sdk.api.llm.api_handler_factory import (
+    get_decision_llm_api_handler,
     get_org_aware_primary_llm_api_handler,
     get_org_aware_secondary_llm_api_handler,
 )
@@ -876,7 +877,9 @@ class RealSkyvernPageAi(SkyvernPageAi):
             )
 
         try:
-            json_response = await get_org_aware_secondary_llm_api_handler(default=app.SECONDARY_LLM_API_HANDLER)(
+            json_response = await get_org_aware_secondary_llm_api_handler(
+                default=get_decision_llm_api_handler(app.SECONDARY_LLM_API_HANDLER)
+            )(
                 prompt=classify_prompt,
                 prompt_name="page-classify",
                 step=step,
@@ -1791,7 +1794,7 @@ class RealSkyvernPageAi(SkyvernPageAi):
         )
 
         infer_llm_handler = await _resolve_assist_llm_handler(
-            "infer-action-type", app.SINGLE_INPUT_AGENT_LLM_API_HANDLER
+            "infer-action-type", get_decision_llm_api_handler(app.SINGLE_INPUT_AGENT_LLM_API_HANDLER)
         )
         json_response = await infer_llm_handler(
             prompt=infer_action_type_prompt,
