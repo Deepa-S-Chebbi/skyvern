@@ -1437,6 +1437,20 @@ if settings.ENABLE_YUTORI:
         ),
     )
 
+if settings.ENABLE_NACE:
+    # A decision model answered through nace_decision_llm_caller, never through litellm; see
+    # LLMCaller._call_nace_decision.
+    _register_builtin_config(
+        "NACE_DREX_MAX",
+        LLMConfig(
+            settings.NACE_MODEL,
+            ["NACE_API_KEY"],
+            supports_vision=True,
+            add_assistant_prefix=False,
+            temperature=None,
+        ),
+    )
+
 if settings.ENABLE_GEMINI:
     _register_builtin_config(
         "GEMINI_FLASH_2_0",

@@ -125,6 +125,7 @@ from skyvern.forge.sdk.api.files import (
 from skyvern.forge.sdk.api.llm.api_handler_factory import (
     LLMAPIHandlerFactory,
     LLMCallerManager,
+    get_decision_llm_api_handler,
     get_org_aware_primary_llm_api_handler,
     get_org_aware_secondary_llm_api_handler,
 )
@@ -8156,7 +8157,9 @@ async def handle_sequential_click_for_dropdown(
     check_user_goal_handler = await resolve_check_user_goal_handler(
         distinct_id_for_override,
         task.organization_id,
-        get_org_aware_secondary_llm_api_handler(default=app.CHECK_USER_GOAL_LLM_API_HANDLER),
+        get_org_aware_secondary_llm_api_handler(
+            default=get_decision_llm_api_handler(app.CHECK_USER_GOAL_LLM_API_HANDLER)
+        ),
     )
     response = await check_user_goal_handler(
         prompt=prompt,
@@ -13259,7 +13262,9 @@ async def choose_auto_completion_dropdown(
             slim_output=slim_output,
         )
         LOG.info("Confirm if it's an auto completion dropdown", sampling=True)
-        json_response = await get_org_aware_secondary_llm_api_handler(default=app.AUTO_COMPLETION_LLM_API_HANDLER)(
+        json_response = await get_org_aware_secondary_llm_api_handler(
+            default=get_decision_llm_api_handler(app.AUTO_COMPLETION_LLM_API_HANDLER)
+        )(
             prompt=auto_completion_confirm_prompt, step=step, prompt_name="auto-completion-choose-option"
         )
         element_id = json_response.get("id", "")
@@ -13756,7 +13761,9 @@ async def discover_and_select_from_full_dropdown(
             element_id=skyvern_element.get_id(),
             original_text=original_text,
         )
-        json_response = await get_org_aware_secondary_llm_api_handler(default=app.AUTO_COMPLETION_LLM_API_HANDLER)(
+        json_response = await get_org_aware_secondary_llm_api_handler(
+            default=get_decision_llm_api_handler(app.AUTO_COMPLETION_LLM_API_HANDLER)
+        )(
             prompt=prompt, step=step, prompt_name="auto-completion-choose-option"
         )
 
