@@ -13264,9 +13264,7 @@ async def choose_auto_completion_dropdown(
         LOG.info("Confirm if it's an auto completion dropdown", sampling=True)
         json_response = await get_org_aware_secondary_llm_api_handler(
             default=get_decision_llm_api_handler(app.AUTO_COMPLETION_LLM_API_HANDLER)
-        )(
-            prompt=auto_completion_confirm_prompt, step=step, prompt_name="auto-completion-choose-option"
-        )
+        )(prompt=auto_completion_confirm_prompt, step=step, prompt_name="auto-completion-choose-option")
         element_id = json_response.get("id", "")
         relevance_float = json_response.get("relevance_float", 0)
         _log_select_shadow_match(
@@ -13763,9 +13761,7 @@ async def discover_and_select_from_full_dropdown(
         )
         json_response = await get_org_aware_secondary_llm_api_handler(
             default=get_decision_llm_api_handler(app.AUTO_COMPLETION_LLM_API_HANDLER)
-        )(
-            prompt=prompt, step=step, prompt_name="auto-completion-choose-option"
-        )
+        )(prompt=prompt, step=step, prompt_name="auto-completion-choose-option")
 
         element_id = json_response.get("id", "")
         relevance_float = json_response.get("relevance_float", 0)

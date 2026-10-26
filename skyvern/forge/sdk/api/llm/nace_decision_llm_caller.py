@@ -149,11 +149,11 @@ def _note(what: str, probability: float) -> str:
 
 
 def _fenced_block_after(prompt: str, heading: str) -> str | None:
-    """The contents of the first ``` fenced block that follows ``heading`` in a rendered prompt, or None."""
-    start = prompt.find(heading)
-    if start < 0:
-        return None
-    match = re.compile(r"```[a-z]*\n(.*?)\n```", re.DOTALL).search(prompt, start + len(heading))
+    """The contents of the ``` fenced block right after the line ``heading`` in a rendered prompt, or None.
+
+    Anchored to a whole line: the templates also mention these headings inside their reply-format comments.
+    """
+    match = re.search(rf"^{re.escape(heading)}\n```[a-z]*\n(.*?)\n```", prompt, re.MULTILINE | re.DOTALL)
     return match.group(1) if match else None
 
 
@@ -387,7 +387,9 @@ _AUTO_COMPLETION_ELEMENTS_HEADING = "HTML elements:"
 _AUTO_COMPLETION_EMERGING_HEADING = "IDs for emerging HTML elements"
 _NO_OPTION = "NONE"
 _MAX_CANDIDATE_DESCRIPTION_CHARS = 240
-_VOID_TAGS = frozenset({"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"})
+_VOID_TAGS = frozenset(
+    {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+)
 
 
 @dataclass
@@ -457,7 +459,9 @@ def _auto_completion_request(prompt: str) -> DecisionRequest:
     emerging = _fenced_block_after(prompt, _AUTO_COMPLETION_EMERGING_HEADING)
     if emerging:
         # The template renders the ids as a Python list/set literal, so each id appears quoted.
-        emerging_candidates = [c for c in candidates if f"'{c.element_id}'" in emerging or f'"{c.element_id}"' in emerging]
+        emerging_candidates = [
+            c for c in candidates if f"'{c.element_id}'" in emerging or f'"{c.element_id}"' in emerging
+        ]
         if emerging_candidates:
             candidates = emerging_candidates
     if len(candidates) > NACE_MAX_CHOICE_OPTIONS - 1:
@@ -504,7 +508,9 @@ def _auto_completion_request(prompt: str) -> DecisionRequest:
                 element_id = option
                 relevance = round(probabilities.get(option, confidence), 2)
         result: dict[str, Any] = {
-            "thought": _note("auto-completion attempt" if attempt_probability >= 0.5 else "no attempt", attempt_probability),
+            "thought": _note(
+                "auto-completion attempt" if attempt_probability >= 0.5 else "no attempt", attempt_probability
+            ),
             "auto_completion_attempt": attempt_probability >= 0.5,
             "reasoning": _note(f"option {element_id}" if element_id else "no suitable option", confidence),
             "confidence_float": confidence,
@@ -651,7 +657,9 @@ def _error_message(response: httpx.Response) -> str:
     return message
 
 
-def _to_model_response(parsed: dict[str, Any], usage: Mapping[str, Any], model: str, request_id: str | None) -> ModelResponse:
+def _to_model_response(
+    parsed: dict[str, Any], usage: Mapping[str, Any], model: str, request_id: str | None
+) -> ModelResponse:
     input_tokens = int(usage.get("input_tokens") or 0)
     output_tokens = int(usage.get("output_tokens") or 0)
     return ModelResponse(
@@ -698,7 +706,8 @@ async def call_nace_decision(
     if not isinstance(answers, dict):
         raise InvalidLLMResponseFormat(f"System One reply has no answers: {json.dumps(payload)[:300]}")
     parsed = request.decode(answers)
-    usage = payload.get("usage") if isinstance(payload.get("usage"), Mapping) else {}
+    raw_usage = payload.get("usage")
+    usage: Mapping[str, Any] = raw_usage if isinstance(raw_usage, Mapping) else {}
     LOG.info(
         "Drex Max decision response",
         prompt_name=prompt_name,
@@ -706,4 +715,6 @@ async def call_nace_decision(
         evaluation_time_ms=payload.get("evaluation_time_ms"),
         input_tokens=usage.get("input_tokens"),
     )
-    return _to_model_response(parsed, usage, model=str(payload.get("model") or client.model), request_id=payload.get("request_id"))
+    return _to_model_response(
+        parsed, usage, model=str(payload.get("model") or client.model), request_id=payload.get("request_id")
+    )
